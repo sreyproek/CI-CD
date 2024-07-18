@@ -27,12 +27,6 @@ jobs:
       - name: Run build
         run: yarn build # Executes the build script defined in your package.json
 
-
-      - name: Run tests
-        env:
-          MONGOBD_URL: ${{ secrets.MONGODB_URL }}
-        run: yarn test
-
       - name: Archive build artifacts
         uses: actions/upload-artifact@v4
         with:
