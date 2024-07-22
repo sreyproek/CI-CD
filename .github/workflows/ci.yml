@@ -32,10 +32,10 @@ jobs:
         with:
           name: build
           path: ./build
-
   deploy:
     runs-on: ubuntu-latest
     needs: build
+    if: github.ref == 'refs/heads/main'
 
     steps:
       - name: Download build artifacts
@@ -43,8 +43,9 @@ jobs:
         with:
           name: build
           path: ./build 
-      - name: List downloaded aftifacts
-        run : ls -la ./build
+
+      - name: List downloaded artifacts
+        run: ls -la ./build
 
       - name: Prepare Deployment Directories
         uses: appleboy/ssh-action@master
@@ -54,8 +55,8 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            mkdir -p /home/ubuntu/apps/build #Change to match your desire directory structure
-            mkdir -p /home/ubuntu/apps/build/configs #for additional configuration files
+            mkdir -p /home/ubuntu/apps/build
+            mkdir -p /home/ubuntu/apps/build/configs
 
       - name: Copy files to Server
         uses: appleboy/scp-action@master
@@ -78,7 +79,7 @@ jobs:
           script: |
             echo "NODE_ENV=production" > /home/ubuntu/apps/build/configs/.env.production
             echo "PORT=${{secrets.PORT}}" >> /home/ubuntu/apps/build/configs/.env.production
-            echo "MONGOBD_URL=${{secrets.MONGOBD_URL}}" >> /home/ubuntu/apps/build/configs/.env.production
+            echo "MONGODB_URL=${{secrets.MONGODB_URL}}" >> /home/ubuntu/apps/build/configs/.env.production
 
       - name: Install Dependencies and Restart Application
         uses: appleboy/ssh-action@master
@@ -91,19 +92,97 @@ jobs:
             source /home/ubuntu/.nvm/nvm.sh
             source /home/ubuntu/.profile
 
-            cd /home/ununtu/apps/build
+            cd /home/ubuntu/apps/build
             yarn install --production
 
-            # Assume PM2 is used, Replace with other command for other process manager
-            # Assume you have script for run start in production and restart in production
-            # Check if the PM2 process is running
-            # Debug: list files after installation
+            # Debug: List files after installation
             ls -la 
 
-            if pm2 show your-service-name > /dev/null; then
+            # Check if the PM2 process is running
+            if pm2 show product-service > /dev/null; then
               echo "Application is running. Restarting..."
-               pm2 restart product-service
+              pm2 restart product-service
             else
               echo "Application is not running. Starting..."
-               pm2 start yarn --name auth -- start
+              pm2 start yarn --name product-service -- start
             fi
+
+
+
+
+  
+
+  # deploy:
+  #   runs-on: ubuntu-latest
+  #   needs: build
+
+  #   steps:
+  #     - name: Download build artifacts
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: build
+  #         path: ./build 
+  #     - name: List downloaded aftifacts
+  #       run : ls -la ./build
+
+  #     - name: Prepare Deployment Directories
+  #       uses: appleboy/ssh-action@master
+  #       with:
+  #         host: ${{ secrets.SERVER_IP }}
+  #         username: ${{ secrets.SERVER_USERNAME }}
+  #         key: ${{ secrets.SSH_PRIVATE_KEY }}
+  #         port: 22
+  #         script: |
+  #           mkdir -p /home/ubuntu/apps/build #Change to match your desire directory structure
+  #           mkdir -p /home/ubuntu/apps/build/configs #for additional configuration files
+
+  #     - name: Copy files to Server
+  #       uses: appleboy/scp-action@master
+  #       with:
+  #         host: ${{ secrets.SERVER_IP }}
+  #         username: ${{ secrets.SERVER_USERNAME }}
+  #         key: ${{ secrets.SSH_PRIVATE_KEY }}
+  #         port: 22
+  #         source: "./build/*"
+  #         target: "/home/ubuntu/apps/build"
+  #         strip_components: 1
+
+  #     - name: Create .env File
+  #       uses: appleboy/ssh-action@master
+  #       with:
+  #         host: ${{ secrets.SERVER_IP }}
+  #         username: ${{ secrets.SERVER_USERNAME }}
+  #         key: ${{ secrets.SSH_PRIVATE_KEY }}
+  #         port: 22
+  #         script: |
+  #           echo "NODE_ENV=production" > /home/ubuntu/apps/build/configs/.env.production
+  #           echo "PORT=${{secrets.PORT}}" >> /home/ubuntu/apps/build/configs/.env.production
+  #           echo "MONGOBD_URL=${{secrets.MONGOBD_URL}}" >> /home/ubuntu/apps/build/configs/.env.production
+
+  #     - name: Install Dependencies and Restart Application
+  #       uses: appleboy/ssh-action@master
+  #       with:
+  #         host: ${{ secrets.SERVER_IP }}
+  #         username: ${{ secrets.SERVER_USERNAME }}
+  #         key: ${{ secrets.SSH_PRIVATE_KEY }}
+  #         port: 22
+  #         script: |
+  #           source /home/ubuntu/.nvm/nvm.sh
+  #           source /home/ubuntu/.profile
+
+  #           cd /home/ununtu/apps/build
+  #           yarn install --production
+
+  #           # Assume PM2 is used, Replace with other command for other process manager
+  #           # Assume you have script for run start in production and restart in production
+  #           # Check if the PM2 process is running
+  #           # Debug: list files after installation
+  #           ls -la 
+
+  #           if pm2 show your-service-name > /dev/null; then
+  #             echo "Application is running. Restarting..."
+  #              pm2 restart product-service
+  #           else
+  #             echo "Application is not running. Starting..."
+  #              pm2 start yarn --name auth -- start
+  #           fi
