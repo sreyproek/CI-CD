@@ -9,7 +9,7 @@ esbuild
     bundle: true,
     platform: "node",
     target: "node20", // Target depends on your environment
-    outdir: "build",
+    outdir: path.resolve(__dirname, "build"),
     external: ["express"], // Specify Node.js packages here
     loader: {
       ".ts": "ts",
